@@ -1,0 +1,28 @@
+{
+  "manifest_version": 2,
+  "name": "Caster",
+  "version": "2.1",
+  "minimum_chrome_version": "23",
+  "icons": {
+    "128": "sender.png"
+  },
+  "app": {
+    "background": {
+      "scripts": ["main.js"]
+    }
+  },
+  "sockets": {
+      "udp": {
+          "send": "*:*",
+          "bind": "*:*",
+          "multicastMembership": ""
+      },
+      "tcp": {
+        "connect": "*"
+      }
+  },
+
+  "permissions" : [
+    "http://*/"
+  ]
+}
