@@ -41,14 +41,7 @@ function closeWindow() {
 }
 
 function send(url, ip, port) {
-    if (url.search("bilibili.com") >= 0) {
-        getBilibiliUrl(url, function (result) {
-            $.get("http://" + ip + ":" + port + "/playmp4?url=" + result, closeWindow);
-        });
-    }
-    else if (url.search("www.youtube.com/watch") >= 0) {
-        $.get("http://" + ip + ":" + port + "/youtube?url=" + encodeURIComponent(url), closeWindow);
-    }
+    $.get("http://" + ip + ":" + port + "/play?url=" + url, closeWindow);
 }
 
 function onSendClick(event) {
