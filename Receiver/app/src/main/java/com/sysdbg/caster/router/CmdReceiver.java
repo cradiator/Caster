@@ -1,12 +1,6 @@
 package com.sysdbg.caster.router;
 
 import android.os.Handler;
-import android.support.annotation.Keep;
-import android.util.Log;
-
-import com.sysdbg.caster.MainActivity;
-import com.sysdbg.caster.analyzer.AnalyzerBase;
-import com.sysdbg.caster.analyzer.KeepvidAnalyzer;
 
 import java.util.Map;
 
@@ -15,22 +9,32 @@ import fi.iki.elonen.NanoHTTPD;
 /**
  * Created by crady on 1/19/2016.
  */
-public class CmdReceiver extends NanoHTTPD implements AnalyzerBase.Callback {
+public class CmdReceiver extends NanoHTTPD {
     private static final String TAG = "Caster.CmdReceiver";
     private static final short DEFAULT_PORT = 2278;
 
-    private MainActivity mMainActivity;
-    private KeepvidAnalyzer mKeepvidAnalyzer;
+    private Callback callback;
+    private Handler handler;
 
-    public CmdReceiver(MainActivity mainActivity) {
-        this(DEFAULT_PORT, mainActivity);
+    public interface Callback {
+        void requestPlay(String url);
     }
 
-    public CmdReceiver(short port, MainActivity mainActivity) {
-        super(port);
+    public CmdReceiver(Handler handler) {
+        this(DEFAULT_PORT, handler);
+    }
 
-        mMainActivity = mainActivity;
-        mKeepvidAnalyzer = new KeepvidAnalyzer();
+    public CmdReceiver(short port, Handler handler) {
+        super(port);
+        this.handler = handler;
+    }
+
+    public Callback getCallback() {
+        return callback;
+    }
+
+    public void setCallback(Callback callback) {
+        this.callback = callback;
     }
 
     @Override
@@ -41,37 +45,24 @@ public class CmdReceiver extends NanoHTTPD implements AnalyzerBase.Callback {
         }
 
         String uri = session.getUri().toString();
-        if (uri.startsWith("/playmp4")) {
-            return onPlayMp4(session);
+        if (uri.startsWith("/play")) {
+            return onPlay(session);
         }
         else if (uri.startsWith("/ping")) {
             return onPing(session);
-        }
-        else if (uri.startsWith("/youtube")) {
-            return onYoutube(session);
         }
 
         return createErrorResponse("unsupport action");
     }
 
-    private Response onPlayMp4(IHTTPSession session) {
+    private Response onPlay(IHTTPSession session) {
         String queryString = session.getQueryParameterString();
         if (!queryString.startsWith("url=")) {
             return createErrorResponse("url parameter doesn't exist");
         }
 
-        mMainActivity.requestPlayMp4(queryString.substring(4));
+        fireOnPlay(queryString.substring(4));
 
-        return createSuccessResponse("playing");
-    }
-
-    private Response onYoutube(IHTTPSession session) {
-        String queryString = session.getQueryParameterString();
-        if (!queryString.startsWith("url=")) {
-            return createErrorResponse("url parameter doesn't exist");
-        }
-
-        mKeepvidAnalyzer.parse(queryString.substring(4), this);
         return createSuccessResponse("playing");
     }
 
@@ -106,8 +97,14 @@ public class CmdReceiver extends NanoHTTPD implements AnalyzerBase.Callback {
         return newFixedLengthResponse(sb.toString());
     }
 
-    @Override
-    public void onResult(String resultUrl) {
-        mMainActivity.requestPlayMp4(resultUrl);
+    private void fireOnPlay(final String url) {
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                if (callback != null) {
+                    callback.requestPlay(url);
+                }
+            }
+        });
     }
 }

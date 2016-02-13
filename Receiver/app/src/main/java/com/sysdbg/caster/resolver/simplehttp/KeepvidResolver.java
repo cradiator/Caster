@@ -1,24 +1,29 @@
-package com.sysdbg.caster.analyzer;
+package com.sysdbg.caster.resolver.simplehttp;
 
 import android.util.Log;
+
+import com.sysdbg.caster.resolver.MediaInfo;
+import com.sysdbg.caster.resolver.simplehttp.SimpleHttpResolver;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.net.HttpURLConnection;
 import java.net.URLEncoder;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
  * Created by crady on 1/24/2016.
  */
-public class KeepvidAnalyzer extends AnalyzerBase {
+public class KeepvidResolver extends SimpleHttpResolver {
     private static final String TAG = "Caster.KVA";
     private static Pattern QUALITY_PATTERN = Pattern.compile("(\\d*)[pP]");
 
-    public KeepvidAnalyzer() {
+    public KeepvidResolver() {
 
     }
 
@@ -34,24 +39,16 @@ public class KeepvidAnalyzer extends AnalyzerBase {
     }
 
     @Override
-    protected String parseContent(String content) {
+    protected MediaInfo parseContent(String content) {
         if (content == null || content.length() <= 0) {
             return null;
         }
 
-        int startPos = content.indexOf("jc(");
-        int endPos = content.lastIndexOf(");");
-        if (startPos == -1 || endPos == -1 || startPos + 3 >= endPos) {
-            return null;
-        }
-        startPos += 3;
-
-        content = content.substring(startPos, endPos);
-        String url = parseJson(content);
-        return url;
+        MediaInfo info = parseJson(content);
+        return info;
     }
 
-    private String parseJson(String content) {
+    private MediaInfo parseJson(String content) {
         JSONObject json = null;
 
         try {
@@ -76,10 +73,11 @@ public class KeepvidAnalyzer extends AnalyzerBase {
         return null;
     }
 
-    private String findSuitableUrl(JSONObject json) {
+    private MediaInfo findSuitableUrl(JSONObject json) {
+        MediaInfo mediaInfo = new MediaInfo();
+        List<MediaInfo.MediaSection> sectionList = new ArrayList<>();
+
         Iterator<String> it = json.keys();
-        String bestMatch = null;
-        String bestQuality = null;
         while(it.hasNext()) {
             String key = it.next();
 
@@ -100,15 +98,15 @@ public class KeepvidAnalyzer extends AnalyzerBase {
                     continue;
                 }
 
-                if (bestQuality == null || compareQuality(quality, bestQuality) > 0) {
-                    bestQuality = quality;
-                    bestMatch = url;
-                }
+                int resolution = extractQuality(quality);
+                MediaInfo.MediaSection section = new MediaInfo.MediaSection(url, true, resolution, true, 0);
+                sectionList.add(section);
             } catch (JSONException e) {
             }
         }
 
-        return bestMatch;
+        mediaInfo.addMediaSection(sectionList);
+        return mediaInfo;
     }
 
     private int compareQuality(String quality1, String quality2) {
