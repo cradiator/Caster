@@ -36,11 +36,6 @@ public class PlayerView extends VideoView {
         init();
     }
 
-    public PlayerView(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
-        super(context, attrs, defStyleAttr, defStyleRes);
-        init();
-    }
-
     public int getCurrentMediaIndex() {
         return currentMediaIndex;
     }
@@ -81,8 +76,10 @@ public class PlayerView extends VideoView {
         @Override
         public void onCompletion(MediaPlayer mp) {
             if (currentMediaIndex >= mediaUrls.length - 1) {
-                fireOnCompletion(mp);
                 currentMediaIndex = 0;
+                seekTo(0);
+
+                fireOnCompletion(mp);
             }
             else {
                 currentMediaIndex++;
