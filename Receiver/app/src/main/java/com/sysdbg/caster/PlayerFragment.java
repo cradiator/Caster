@@ -11,6 +11,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.sysdbg.caster.history.HistoryItem;
+import com.sysdbg.caster.history.HistoryManager;
 import com.sysdbg.caster.player.PlayerController;
 import com.sysdbg.caster.player.PlayerView;
 import com.sysdbg.caster.resolver.Resolver;
@@ -32,6 +34,11 @@ public class PlayerFragment extends Fragment {
 
     private List<String> textInfos;
 
+    private String pendingUrl;
+    private int pendingSectionNumber;
+    private int pendingOffset;
+    private int pendingResolution;
+
     public PlayerFragment() {
         textInfos = new ArrayList<>();
         handler = new Handler();
@@ -47,6 +54,17 @@ public class PlayerFragment extends Fragment {
 
     public void play(final String url, final int sectionNumber, final int offset, final int resolution) {
         stop();
+
+        if (playerView == null) {
+            pendingUrl = url;
+            pendingSectionNumber = sectionNumber;
+            pendingOffset = offset;
+            pendingResolution = resolution;
+            return;
+        }
+
+        pendingUrl = null;
+        pendingSectionNumber = pendingOffset = pendingResolution = 0;
 
         clearText();
         addText("Resolving " + url);
@@ -73,6 +91,8 @@ public class PlayerFragment extends Fragment {
                         }
 
                         currentResolution = info.getMediaPart(sectionNumber, resolution).getVideoResolution();
+
+                        updateHistory(info, sectionNumber, offset);
                         playerView.play(sectionNumber, offset, urls);
                     }
                 },
@@ -145,7 +165,18 @@ public class PlayerFragment extends Fragment {
         playerView.setOnCompletionListener(onMediaPlayerComplete);
 
         addText("Caster");
+
+        if (pendingUrl != null) {
+            play(pendingUrl, pendingSectionNumber, pendingOffset, pendingResolution);
+        }
+
         return view;
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        updateHistory(mediaInfo, getCurrentSection(), getCurrentSectionOffset());
     }
 
     @Override
@@ -159,6 +190,19 @@ public class PlayerFragment extends Fragment {
     @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
+    }
+
+    private void updateHistory(MediaInfo medioInfo, int currentSection, int currentOffset) {
+        HistoryItem historyItem = new HistoryItem();
+        historyItem.setWebUrl(medioInfo.getWebPageUrl());
+        historyItem.setImgUrl(medioInfo.getImageUrl());
+        historyItem.setTitle(medioInfo.getTitle());
+        historyItem.setDescription(medioInfo.getDescription());
+        historyItem.setTotalSection(medioInfo.getMediaSectionCount());
+        historyItem.setCurrentSection(currentSection);
+        historyItem.setCurrentOffset(currentOffset);
+
+        HistoryManager.getInstance(getActivity()).saveItem(historyItem);
     }
 
     private void clearText() {
@@ -198,6 +242,7 @@ public class PlayerFragment extends Fragment {
         @Override
         public void onCompletion(MediaPlayer mp) {
             addText("Play Completion");
+            updateHistory(mediaInfo, 0, 0);
         }
     };
 

@@ -61,6 +61,9 @@ public class BilibiliResolver extends Resolver {
         String message0 = fetchUrl(apiUrl);
 
         JSONObject json = new JSONObject(message0);
+        String title = json.getString("title");
+        String description = json.getString("description");
+
         String cid = json.getString("cid");
         Map<String, String> params = new HashMap<>();
         params.put("otype", "json");
@@ -79,16 +82,19 @@ public class BilibiliResolver extends Resolver {
         }
 
         String mediaAddress = json1.getJSONArray("durl").getJSONObject(0).getString("url");
-        return generateMediaInfo(mediaAddress, url, json.getString("pic"));
+        return generateMediaInfo(mediaAddress, url, json.getString("pic"), title, description);
     }
 
-    private MediaInfo generateMediaInfo(String mediaAddress, String webPageUrl, String imageUrl) {
+    private MediaInfo generateMediaInfo(String mediaAddress, String webPageUrl, String imageUrl, String title, String description) {
         MediaInfo info = new MediaInfo();
         List<MediaInfo.MediaSection> sections = new ArrayList<>();
         MediaInfo.MediaSection section = new MediaInfo.MediaSection(mediaAddress, true, 720, true, 0);
         sections.add(section);
         info.addMediaSection(sections);
         info.setWebPageUrl(webPageUrl);
+        info.setImageUrl(imageUrl);
+        info.setTitle(title);
+        info.setDescription(description);
         return info;
     }
 

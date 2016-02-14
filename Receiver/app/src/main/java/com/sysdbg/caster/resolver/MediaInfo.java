@@ -18,8 +18,9 @@ public class MediaInfo {
 
     private List<List<MediaSection>> mediaSections;
     private String webPageUrl;
-
     private String imageUrl;
+    private String title;
+    private String description;
 
     public MediaInfo() {
         mediaSections = new ArrayList<>();
@@ -32,6 +33,22 @@ public class MediaInfo {
                 "mediaSections=" + mediaSections +
                 ", webPageUrl='" + webPageUrl + '\'' +
                 '}';
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public void addMediaSection(List<MediaSection> sections) {

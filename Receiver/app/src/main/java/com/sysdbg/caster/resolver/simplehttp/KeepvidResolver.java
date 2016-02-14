@@ -65,12 +65,23 @@ public class KeepvidResolver extends SimpleHttpResolver {
                 return null;
             }
 
-            return findSuitableUrl(links);
+            MediaInfo mediaInfo = findSuitableUrl(links);
+            parseInformation(json.getJSONObject("info"), mediaInfo);
+
+            return mediaInfo;
         } catch (JSONException e) {
             Log.e(TAG, "json invalid", e);
         }
 
         return null;
+    }
+
+    private void parseInformation(JSONObject info, MediaInfo mediaInfo) {
+        String title = info.optString("title");
+        String image = info.optString("image");
+
+        mediaInfo.setTitle(title);
+        mediaInfo.setImageUrl(image);
     }
 
     private MediaInfo findSuitableUrl(JSONObject json) {

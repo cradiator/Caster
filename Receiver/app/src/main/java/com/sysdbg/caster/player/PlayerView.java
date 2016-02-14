@@ -82,6 +82,7 @@ public class PlayerView extends VideoView {
         public void onCompletion(MediaPlayer mp) {
             if (currentMediaIndex >= mediaUrls.length - 1) {
                 fireOnCompletion(mp);
+                currentMediaIndex = 0;
             }
             else {
                 currentMediaIndex++;
@@ -105,10 +106,10 @@ public class PlayerView extends VideoView {
         stopPlayback();
 
         setVideoPath(mediaUrls[sectionNumber]);
-        start();
         if (offset > 0) {
             seekTo(offset);
         }
+        start();
     }
 
     private void fireOnCompletion(MediaPlayer mp) {

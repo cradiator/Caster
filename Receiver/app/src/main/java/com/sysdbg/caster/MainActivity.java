@@ -1,17 +1,15 @@
 package com.sysdbg.caster;
 
+import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.content.Context;
 import android.os.Bundle;
-import android.app.Activity;
 import android.os.Handler;
 import android.os.PowerManager;
-import android.util.Log;
-import android.widget.FrameLayout;
 
-import com.sysdbg.caster.player.PlayerView;
+import com.sysdbg.caster.history.HistoryItem;
 import com.sysdbg.caster.router.BroadCastReceiver;
 import com.sysdbg.caster.router.CmdReceiver;
 
@@ -19,6 +17,7 @@ import java.io.IOException;
 
 public class MainActivity extends Activity {
     private PlayerFragment playerFragement;
+    private HistroyFragment historyFragment;
     PowerManager.WakeLock wakeLock = null;
     private Handler handler = new Handler();
     private BroadCastReceiver broadCastReceiver = new BroadCastReceiver();
@@ -30,15 +29,22 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
 
         playerFragement = new PlayerFragment();
+        historyFragment = new HistroyFragment();
+
+        historyFragment.setCallback(historyFragmentCallback);
         cmdReceiver.setCallback(cmdReceiverCallback);
 
-        switchToFragment(playerFragement);
+        FragmentManager manager = getFragmentManager();
+        FragmentTransaction transation = manager.beginTransaction();
+        transation.replace(R.id.mainFrame, historyFragment);
+        transation.commit();
     }
 
     private void switchToFragment(Fragment fragment) {
         FragmentManager manager = getFragmentManager();
         FragmentTransaction transation = manager.beginTransaction();
-        transation.add(R.id.mainFrame, fragment);
+        transation.addToBackStack(null);
+        transation.replace(R.id.mainFrame, fragment);
         transation.commit();
     }
 
@@ -64,8 +70,16 @@ public class MainActivity extends Activity {
         }
     };
 
+    private HistroyFragment.Callback historyFragmentCallback = new HistroyFragment.Callback() {
+        @Override
+        public void onPlay(HistoryItem item) {
+            play(item.getWebUrl(), item.getCurrentSection(), item.getCurrentOffset());
+        }
+    };
+
     private void play(String url, int sectionNumber, int offset) {
         if (playerFragement != null) {
+            switchToFragment(playerFragement);
             playerFragement.play(url, sectionNumber, offset);
         }
     }
