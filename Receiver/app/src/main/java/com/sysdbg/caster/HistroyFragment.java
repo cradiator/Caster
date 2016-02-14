@@ -25,11 +25,15 @@ import com.sysdbg.caster.history.HistoryManager;
 import com.sysdbg.caster.utils.ScreenUtils;
 import com.sysdbg.caster.utils.StringUtils;
 
+import java.util.HashSet;
+import java.util.Set;
+
 public class HistroyFragment extends BrowseFragment {
     private Callback callback;
+    private Set<PicassoImageCardViewTarget> pendingTargets;
 
     public HistroyFragment() {
-
+        pendingTargets = new HashSet<>();
     }
 
     @Override
@@ -52,8 +56,8 @@ public class HistroyFragment extends BrowseFragment {
 
     private void setupUI() {
         setTitle("Caster");
-        setBrandColor(getResources().getColor(R.color.brand_color));
         setHeadersState(HEADERS_ENABLED);
+        setBadgeDrawable(getActivity().getResources().getDrawable(R.drawable.caster));
     }
 
     private void setupRows() {
@@ -114,6 +118,14 @@ public class HistroyFragment extends BrowseFragment {
         }
     }
 
+    private void addPendingTarget(PicassoImageCardViewTarget target) {
+        pendingTargets.add(target);
+    }
+
+    private void removePendingTarget(PicassoImageCardViewTarget target) {
+        pendingTargets.remove(target);
+    }
+
     private class CardPresenter extends Presenter {
         private static final int CARD_WIDTH = 500;
         private static final int CARD_HEIGHT = 300;
@@ -164,6 +176,7 @@ public class HistroyFragment extends BrowseFragment {
                                 ScreenUtils.convertDpToPixel(context, CARD_HEIGHT))
                         .error(loadingImg)
                         .into(target);
+                addPendingTarget(target);
             }
         }
 
@@ -173,7 +186,7 @@ public class HistroyFragment extends BrowseFragment {
         }
     }
 
-    public static class PicassoImageCardViewTarget implements Target {
+    public class PicassoImageCardViewTarget implements Target {
         private ImageCardView mImageCardView;
 
         public PicassoImageCardViewTarget(ImageCardView imageCardView) {
@@ -184,11 +197,13 @@ public class HistroyFragment extends BrowseFragment {
         public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom loadedFrom) {
             Drawable bitmapDrawable = new BitmapDrawable(mImageCardView.getContext().getResources(), bitmap);
             mImageCardView.setMainImage(bitmapDrawable);
+            removePendingTarget(this);
         }
 
         @Override
         public void onBitmapFailed(Drawable drawable) {
             mImageCardView.setMainImage(drawable);
+            removePendingTarget(this);
         }
 
         @Override
