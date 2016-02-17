@@ -1,5 +1,6 @@
 package com.sysdbg.caster.router;
 
+import android.content.Context;
 import android.os.Handler;
 
 import java.util.Map;
@@ -14,19 +15,21 @@ public class CmdReceiver extends NanoHTTPD {
     private static final short DEFAULT_PORT = 2278;
 
     private Callback callback;
+    private Context context;
     private Handler handler;
 
     public interface Callback {
         void requestPlay(String url);
     }
 
-    public CmdReceiver(Handler handler) {
-        this(DEFAULT_PORT, handler);
+    public CmdReceiver(Context context) {
+        this(DEFAULT_PORT, context);
     }
 
-    public CmdReceiver(short port, Handler handler) {
+    public CmdReceiver(short port, Context context) {
         super(port);
-        this.handler = handler;
+        this.context = context;
+        handler = new Handler(context.getMainLooper());
     }
 
     public Callback getCallback() {
