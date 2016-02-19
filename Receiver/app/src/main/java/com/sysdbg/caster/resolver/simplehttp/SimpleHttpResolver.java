@@ -58,10 +58,11 @@ abstract public class SimpleHttpResolver extends Resolver {
             // parse content
             String content = abos.toString();
             final MediaInfo result = parseContent(content);
-            result.setWebPageUrl(mUrl);
             if (result == null) {
                 return null;
             }
+
+            result.setWebPageUrl(mUrl);
 
             return result;
         } catch (MalformedURLException e) {

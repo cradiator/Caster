@@ -3,6 +3,7 @@ package com.sysdbg.caster.resolver;
 import android.os.Handler;
 import android.util.Log;
 
+import com.sysdbg.caster.resolver.simplehttp.FlvcdResolver;
 import com.sysdbg.caster.resolver.simplehttp.KeepvidResolver;
 
 /**
@@ -22,6 +23,9 @@ abstract public class Resolver {
         }
         else if (url.contains("bilibili.com")) {
             resolver = new BilibiliResolver();
+        }
+        else if (url.contains("youku.com")) {
+            resolver = new FlvcdResolver();
         }
         else {
             resolver = new PlainUrlResolver();
