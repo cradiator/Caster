@@ -2,13 +2,13 @@ apply plugin: 'com.android.application'
 
 
 android {
-    compileSdkVersion 23
+    compileSdkVersion 22
     buildToolsVersion "23.0.2"
 
     defaultConfig {
         applicationId "com.sysdbg.caster"
         minSdkVersion 17
-        targetSdkVersion 23
+        targetSdkVersion 22
         versionCode 1
         versionName "1.0"
     }
@@ -22,8 +22,8 @@ android {
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
-    compile 'com.android.support:recyclerview-v7:23.0.1'
-    compile 'com.android.support:leanback-v17:23.0.1'
-    compile 'com.google.android.gms:play-services:8.4.0'
+    compile project(':vitamio')
+    compile 'com.android.support:recyclerview-v7:22.0.0'
+    compile 'com.android.support:leanback-v17:22.0.0'
     compile 'com.squareup.picasso:picasso:2.3.2'
 }

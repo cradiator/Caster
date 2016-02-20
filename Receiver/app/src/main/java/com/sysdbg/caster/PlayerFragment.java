@@ -1,8 +1,6 @@
 package com.sysdbg.caster;
 
 import android.app.Fragment;
-import android.content.Context;
-import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -13,14 +11,16 @@ import android.widget.TextView;
 
 import com.sysdbg.caster.history.HistoryItem;
 import com.sysdbg.caster.history.HistoryManager;
-import com.sysdbg.caster.player.PlayerController;
 import com.sysdbg.caster.player.PlayerView;
+import com.sysdbg.caster.resolver.MediaInfo;
 import com.sysdbg.caster.resolver.Resolver;
 import com.sysdbg.caster.resolver.simplehttp.SimpleHttpResolver;
-import com.sysdbg.caster.resolver.MediaInfo;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import io.vov.vitamio.MediaPlayer;
+import io.vov.vitamio.widget.MediaController;
 
 public class PlayerFragment extends Fragment {
     private static final String TAG = PlayerFragment.class.getSimpleName();
@@ -28,7 +28,7 @@ public class PlayerFragment extends Fragment {
     private Handler handler;
     private PlayerView playerView;
     private TextView playerInformationTextView;
-    private PlayerController playerController;
+    private MediaController playerController;
     private MediaInfo mediaInfo;
     private int currentResolution;
 
@@ -133,7 +133,7 @@ public class PlayerFragment extends Fragment {
     }
 
     public int getCurrentSectionOffset() {
-        return playerView.getCurrentPosition();
+        return (int)playerView.getCurrentPosition();
     }
 
     public int[] getResolutions(int sectionNumber) {
@@ -158,8 +158,8 @@ public class PlayerFragment extends Fragment {
         playerView = (PlayerView)view.findViewById(R.id.playerView);
         playerInformationTextView = (TextView)view.findViewById(R.id.playerInformationTextView);
 
-        playerController = new PlayerController(getActivity());
-        playerController.setCallback(playerContrallerCallback);
+        playerController = new MediaController(getActivity());
+        // playerController.setCallback(playerContrallerCallback);
         playerView.setMediaController(playerController);
         playerView.setOnPreparedListener(onMediaPlayerPrepared);
         playerView.setOnCompletionListener(onMediaPlayerComplete);
@@ -245,7 +245,7 @@ public class PlayerFragment extends Fragment {
             updateHistory(mediaInfo, 0, 0);
         }
     };
-
+/*
     private PlayerController.Callback playerContrallerCallback = new PlayerController.Callback() {
         @Override
         public int getSectionCount() {
@@ -287,6 +287,7 @@ public class PlayerFragment extends Fragment {
                     resolution);
         }
     };
+    */
 }
 
 

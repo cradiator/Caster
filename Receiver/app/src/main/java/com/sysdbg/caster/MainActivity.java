@@ -19,6 +19,8 @@ import com.sysdbg.caster.utils.StringUtils;
 
 import java.io.IOException;
 
+import io.vov.vitamio.Vitamio;
+
 public class MainActivity extends Activity {
     private static final String TAG = MainActivity.class.getSimpleName();
     private static final String INTENT_EXTRA_URL = "URL";
@@ -37,6 +39,8 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Vitamio.isInitialized(getApplication());
+
         setContentView(R.layout.activity_main);
 
         playerFragement = new PlayerFragment();

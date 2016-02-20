@@ -186,9 +186,11 @@ public class HistoryManager {
     }
 
     private String readHistoryFileAsString() {
-        try(Reader reader  = new InputStreamReader(
-                context.openFileInput(HISTORY_FILE_NAME),
-                HISTORY_FILE_ENCODING)) {
+        Reader reader = null;
+        try {
+            reader  = new InputStreamReader(
+                    context.openFileInput(HISTORY_FILE_NAME),
+                    HISTORY_FILE_ENCODING);
             StringBuilder sb = new StringBuilder();
             char[] buffer = new char[1024];
             for(;;) {
@@ -205,6 +207,13 @@ public class HistoryManager {
             Log.i(TAG, "history file not found, use empty");
         } catch (IOException e) {
             Log.e(TAG, "open history file fail", e);
+        } finally {
+            if (reader != null) {
+                try {
+                    reader.close();
+                } catch (IOException e) {
+                }
+            }
         }
 
         return null;
@@ -215,12 +224,21 @@ public class HistoryManager {
             content = "";
         }
 
-        try(Writer writer = new OutputStreamWriter(
-                context.openFileOutput(HISTORY_FILE_NAME, Context.MODE_PRIVATE),
-                HISTORY_FILE_ENCODING)) {
+        Writer writer = null;
+        try {
+            writer = new OutputStreamWriter(
+                    context.openFileOutput(HISTORY_FILE_NAME, Context.MODE_PRIVATE),
+                    HISTORY_FILE_ENCODING);
             writer.write(content);
         } catch (Exception e) {
             Log.e(TAG, "save history.dat fail", e);
+        } finally {
+            if (writer != null) {
+                try {
+                    writer.close();
+                } catch (IOException e) {
+                }
+            }
         }
     }
 }

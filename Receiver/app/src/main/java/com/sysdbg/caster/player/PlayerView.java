@@ -1,12 +1,11 @@
 package com.sysdbg.caster.player;
 
 import android.content.Context;
-import android.media.MediaPlayer;
-import android.os.Parcel;
-import android.os.Parcelable;
 import android.util.AttributeSet;
 import android.util.Log;
-import android.widget.VideoView;
+
+import io.vov.vitamio.MediaPlayer;
+import io.vov.vitamio.widget.VideoView;
 
 /**
  * Created by crady on 2/7/2016.
