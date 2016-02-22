@@ -2,6 +2,7 @@ package com.sysdbg.caster.resolver;
 
 import android.os.Handler;
 
+import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -10,7 +11,8 @@ import java.util.List;
  */
 public class PlainUrlResolver extends Resolver {
     @Override
-    protected MediaInfo doParse(final String url) {
+    protected MediaInfo doParse(final String url) throws MalformedURLException {
+        /*
         final MediaInfo info = new MediaInfo();
         info.setWebPageUrl(url);
 
@@ -19,6 +21,12 @@ public class PlainUrlResolver extends Resolver {
         sections.add(section);
 
         info.addMediaSection(sections);
+        */
+
+        MediaInfo info = MediaInfo.builder()
+                .withWebPageUrl(url)
+                .withData("Unknown", null, url)
+                .build();
         return info;
     }
 }

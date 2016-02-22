@@ -6,6 +6,7 @@ import com.sysdbg.caster.resolver.MediaInfo;
 import com.sysdbg.caster.utils.StringUtils;
 
 import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -19,13 +20,13 @@ public class FlvcdResolver extends SimpleHttpResolver {
     private static final Pattern TITLE_REGEX = Pattern.compile("document.title\\s+=\\s+\"(.*?)\"");
 
     @Override
-    protected String generateRequestUrl(String url) {
-        url = StringUtils.removeQueryFromUrl(url);
+    protected URL generateRequestUrl(URL webPageUrl) throws Throwable {
+        String url = StringUtils.removeQueryFromUrl(webPageUrl.toString());
         if (StringUtils.isEmpty(url)) {
             return null;
         }
 
-        return "http://www.flvcd.com/parse.php?kw=" + url + "&format=high";
+        return new URL("http://www.flvcd.com/parse.php?kw=" + url + "&format=high");
     }
 
     @Override
@@ -34,37 +35,33 @@ public class FlvcdResolver extends SimpleHttpResolver {
     }
 
     @Override
-    protected MediaInfo parseContent(String content) {
+    protected MediaInfo parseContent(String content, URL webPageUrl, URL requestUrl) throws Throwable {
         // parse URL
         List<String> urls = new ArrayList<>();
 
         Matcher matcher = URL_REGEX.matcher(content);
         while(matcher.find()  && matcher.groupCount() == 1) {
-            Log.e("abc", new Integer(matcher.groupCount()).toString());
             String url = matcher.group(1);
             urls.add(url);
         }
+        String[] urlsArray = new String[urls.size()];
+        urls.toArray(urlsArray);
 
         if (urls.size() == 0) {
             return null;
         }
 
-        MediaInfo mi = new MediaInfo();
-        for(String url : urls) {
-            MediaInfo.MediaSection ms = new MediaInfo.MediaSection(url);
-            List<MediaInfo.MediaSection> lms = new ArrayList<>();
-            lms.add(ms);
-
-            mi.addMediaSection(lms);
-        }
-
         // parse title
+        String title = null;
         matcher = TITLE_REGEX.matcher(content);
         if (matcher.find() && matcher.groupCount() == 1) {
-            String title = matcher.group(1);
-            mi.setTitle(title);
+            title = matcher.group(1);
         }
 
-        return mi;
+        return MediaInfo.builder()
+                .withTitle(title)
+                .withWebPageUrl(StringUtils.removeQueryFromUrl(webPageUrl.toString()))
+                .withData("High", null, urlsArray)
+                .build();
     }
 }

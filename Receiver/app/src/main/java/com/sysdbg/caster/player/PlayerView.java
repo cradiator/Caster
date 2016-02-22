@@ -4,6 +4,17 @@ import android.content.Context;
 import android.util.AttributeSet;
 import android.util.Log;
 
+import com.sysdbg.caster.resolver.MediaInfo;
+import com.sysdbg.caster.utils.StringUtils;
+
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.UUID;
+
 import io.vov.vitamio.MediaPlayer;
 import io.vov.vitamio.widget.VideoView;
 
@@ -12,111 +23,94 @@ import io.vov.vitamio.widget.VideoView;
  */
 public class PlayerView extends VideoView {
     private static final String TAG = PlayerView.class.getSimpleName();
+    private static final String M3U_CACHE_DIR = "M3U-Cache";
 
-    private String[] mediaUrls;
-    private int currentMediaIndex;
-
-    private MediaPlayer.OnCompletionListener onCompletionListener;
-    private MediaPlayer.OnPreparedListener onPreparedListener;
     private boolean firstPlay = true;
 
     public PlayerView(Context context) {
         super(context);
-        init();
     }
 
     public PlayerView(Context context, AttributeSet attrs) {
         super(context, attrs);
-        init();
     }
 
     public PlayerView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        init();
     }
 
-    public int getCurrentMediaIndex() {
-        return currentMediaIndex;
+    public void play(MediaInfo mediaInfo) {
+        play(mediaInfo, 0);
     }
 
-    public void play(int currentMediaIndex, int offset, String... urls) {
-        mediaUrls = urls;
-        play(currentMediaIndex, offset);
+    public void play(MediaInfo mediaInfo, int offset) {
+        play(mediaInfo, offset, MediaInfo.MAX_VIDEO_RESOLUTION);
     }
 
-    public void play(int currentMediaIndex, int offset) {
-        if (mediaUrls == null) {
-            Log.e(TAG, "play with empty urls");
+    public void play(MediaInfo mediaInfo, long offset, String definition) {
+        if (mediaInfo == null) {
+            Log.e(TAG, "play with null MediaInfo");
             return;
         }
 
-        this.currentMediaIndex = currentMediaIndex;
-        firstPlay = true;
-        playSection(currentMediaIndex, offset);
-    }
-
-    @Override
-    public void setOnCompletionListener(MediaPlayer.OnCompletionListener l) {
-        onCompletionListener = l;
-    }
-
-    @Override
-    public void setOnPreparedListener(MediaPlayer.OnPreparedListener l) {
-        onPreparedListener = l;
-    }
-
-    private void init() {
-        super.setOnCompletionListener(sectionCompletionListener);
-        super.setOnPreparedListener(sectionOnPreparedListener);
-    }
-
-    private MediaPlayer.OnCompletionListener sectionCompletionListener
-            = new MediaPlayer.OnCompletionListener() {
-        @Override
-        public void onCompletion(MediaPlayer mp) {
-            if (currentMediaIndex >= mediaUrls.length - 1) {
-                currentMediaIndex = 0;
-                seekTo(0);
-
-                fireOnCompletion(mp);
-            }
-            else {
-                currentMediaIndex++;
-                playSection(currentMediaIndex, 0);
-            }
+        // get media data with definition
+        MediaInfo.MediaData mediaData = mediaInfo.getData(definition);
+        if (mediaData == null) {
+            Log.e(TAG, "play with empty MediaData");
+            return;
         }
-    };
 
-    private MediaPlayer.OnPreparedListener sectionOnPreparedListener
-            = new MediaPlayer.OnPreparedListener() {
-        @Override
-        public void onPrepared(MediaPlayer mp) {
-            if (firstPlay) {
-                firstPlay = false;
-                fireOnPrepared(mp);
-            }
+        // get media path
+        String path = null;
+        if (mediaData.getDataLocations().size() == 1) {
+            path = mediaData.getDataLocations().get(0).toString();
         }
-    };
+        else if (mediaData.getM3uLocation() != null){
+            path = mediaData.getM3uLocation().toString();
+        }
+        else {
+            String prefix = null;
+            if (mediaInfo.getWebPageUrl() != null) {
+                prefix = mediaInfo.getWebPageUrl().getHost();
+            }
 
-    private void playSection(int sectionNumber, int offset) {
-        stopPlayback();
+            path = generateLocalM4u(mediaData, prefix);
+        }
 
-        setVideoPath(mediaUrls[sectionNumber]);
+        // start play
+        setVideoPath(path);
         if (offset > 0) {
             seekTo(offset);
         }
         start();
     }
 
-    private void fireOnCompletion(MediaPlayer mp) {
-        if (onCompletionListener != null) {
-            onCompletionListener.onCompletion(mp);
-        }
-    }
+    private String generateLocalM4u(MediaInfo.MediaData mediaData, String prefix) {
+        File cacheDir = getContext().getCacheDir();
+        File m3uDir = new File(cacheDir, M3U_CACHE_DIR);
+        m3uDir.mkdir();
 
-    private void fireOnPrepared(MediaPlayer mp) {
-        if (onPreparedListener != null) {
-            onPreparedListener.onPrepared(mp);
+        if (StringUtils.isEmpty(prefix)) {
+            prefix = "";
         }
+
+        File m3uFile = new File(m3uDir, prefix + "-" + UUID.randomUUID().toString());
+        OutputStream os = null;
+        try {
+            os = new BufferedOutputStream(new FileOutputStream(m3uFile));
+            mediaData.generateM3uWithLocations(os);
+        } catch (FileNotFoundException e) {
+            Log.e(TAG, "Can create m3u file", e);
+            return null;
+        } finally {
+            if (os != null) {
+                try {
+                    os.close();
+                } catch (IOException e) {
+                }
+            }
+        }
+
+        return m3uFile.toURI().toString();
     }
 }

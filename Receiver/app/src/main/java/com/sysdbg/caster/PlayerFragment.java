@@ -16,6 +16,7 @@ import com.sysdbg.caster.resolver.MediaInfo;
 import com.sysdbg.caster.resolver.Resolver;
 import com.sysdbg.caster.resolver.simplehttp.SimpleHttpResolver;
 
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,14 +31,13 @@ public class PlayerFragment extends Fragment {
     private TextView playerInformationTextView;
     private MediaController playerController;
     private MediaInfo mediaInfo;
-    private int currentResolution;
+    private String definition;
 
     private List<String> textInfos;
 
     private String pendingUrl;
-    private int pendingSectionNumber;
-    private int pendingOffset;
-    private int pendingResolution;
+    private long pendingOffset;
+    private String pendingDefinition;
 
     public PlayerFragment() {
         textInfos = new ArrayList<>();
@@ -45,26 +45,27 @@ public class PlayerFragment extends Fragment {
     }
 
     public void play(String url) {
-        play(url, 0, 0);
+        play(url, 0);
     }
 
-    public void play(String url, int sectionNumber, int offset) {
-        play(url, sectionNumber, offset, MediaInfo.MAX_VIDEO_RESOLUTION);
+    public void play(String url, long offset) {
+        play(url, offset, MediaInfo.MAX_VIDEO_RESOLUTION);
     }
 
-    public void play(final String url, final int sectionNumber, final int offset, final int resolution) {
+    public void play(final String url, final long offset, final String definition) {
         stop();
 
         if (playerView == null) {
             pendingUrl = url;
-            pendingSectionNumber = sectionNumber;
             pendingOffset = offset;
-            pendingResolution = resolution;
+            pendingDefinition = definition;
             return;
         }
 
-        pendingUrl = null;
-        pendingSectionNumber = pendingOffset = pendingResolution = 0;
+        pendingUrl = pendingDefinition = null;
+        pendingOffset = 0;
+
+        this.definition = definition;
 
         clearText();
         addText("Resolving " + url);
@@ -79,21 +80,11 @@ public class PlayerFragment extends Fragment {
 
                         addText("Loading...");
                         mediaInfo = info;
+                        HistoryManager.saveMediaInfo(getActivity().getApplication(),
+                                mediaInfo,
+                                offset);
 
-                        int sectionCount = info.getMediaSectionCount();
-                        String urls[] = new String[sectionCount];
-                        for (int i = 0; i < urls.length; i++) {
-                            MediaInfo.MediaSection section = info.getMediaPart(i, resolution);
-                            if (section == null) {
-                                continue;
-                            }
-                            urls[i] = section.getMediaUrl();
-                        }
-
-                        currentResolution = info.getMediaPart(sectionNumber, resolution).getVideoResolution();
-
-                        updateHistory(info, sectionNumber, offset);
-                        playerView.play(sectionNumber, offset, urls);
+                        playerView.play(mediaInfo, offset, definition);
                     }
                 },
                 handler);
@@ -108,23 +99,11 @@ public class PlayerFragment extends Fragment {
         mediaInfo = null;
     }
 
-    public int getCurrentResolution() {
-        return currentResolution;
+    public String getDefinition() {
+        return definition;
     }
 
-    public int getCurrentSection() {
-        return playerView.getCurrentMediaIndex();
-    }
-
-    public int getSectionCount() {
-        if (mediaInfo == null) {
-            return 0;
-        }
-
-        return mediaInfo.getMediaSectionCount();
-    }
-
-    public String getUrl() {
+    public URL getUrl() {
         if (mediaInfo == null) {
             return null;
         }
@@ -132,16 +111,8 @@ public class PlayerFragment extends Fragment {
         return mediaInfo.getWebPageUrl();
     }
 
-    public int getCurrentSectionOffset() {
-        return (int)playerView.getCurrentPosition();
-    }
-
-    public int[] getResolutions(int sectionNumber) {
-        if (mediaInfo == null) {
-            return new int[0];
-        }
-
-        return mediaInfo.getResolutions(getCurrentSection());
+    public long getPosition() {
+        return playerView.getCurrentPosition();
     }
 
     @Override
@@ -167,7 +138,7 @@ public class PlayerFragment extends Fragment {
         addText("Caster");
 
         if (pendingUrl != null) {
-            play(pendingUrl, pendingSectionNumber, pendingOffset, pendingResolution);
+            play(pendingUrl, pendingOffset, pendingDefinition);
         }
 
         return view;
@@ -176,7 +147,9 @@ public class PlayerFragment extends Fragment {
     @Override
     public void onPause() {
         super.onPause();
-        updateHistory(mediaInfo, getCurrentSection(), getCurrentSectionOffset());
+        HistoryManager.saveMediaInfo(getActivity().getApplication(),
+                mediaInfo,
+                getPosition());
     }
 
     @Override
@@ -190,19 +163,6 @@ public class PlayerFragment extends Fragment {
     @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-    }
-
-    private void updateHistory(MediaInfo medioInfo, int currentSection, int currentOffset) {
-        HistoryItem historyItem = new HistoryItem();
-        historyItem.setWebUrl(medioInfo.getWebPageUrl());
-        historyItem.setImgUrl(medioInfo.getImageUrl());
-        historyItem.setTitle(medioInfo.getTitle());
-        historyItem.setDescription(medioInfo.getDescription());
-        historyItem.setTotalSection(medioInfo.getMediaSectionCount());
-        historyItem.setCurrentSection(currentSection);
-        historyItem.setCurrentOffset(currentOffset);
-
-        HistoryManager.getInstance(getActivity()).saveItem(historyItem);
     }
 
     private void clearText() {
@@ -242,7 +202,7 @@ public class PlayerFragment extends Fragment {
         @Override
         public void onCompletion(MediaPlayer mp) {
             addText("Play Completion");
-            updateHistory(mediaInfo, 0, 0);
+            HistoryManager.saveMediaInfo(getActivity().getApplication(), mediaInfo, 0);
         }
     };
 /*

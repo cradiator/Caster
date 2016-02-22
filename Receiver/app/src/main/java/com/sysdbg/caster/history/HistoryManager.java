@@ -3,6 +3,7 @@ package com.sysdbg.caster.history;
 import android.content.Context;
 import android.util.Log;
 
+import com.sysdbg.caster.resolver.MediaInfo;
 import com.sysdbg.caster.utils.StringUtils;
 
 import org.json.JSONArray;
@@ -46,6 +47,25 @@ public class HistoryManager {
         return instance;
     }
 
+    public static void saveMediaInfo(Context context, MediaInfo info, long offset) {
+        if (info == null) {
+            return;
+        }
+
+        HistoryItem item = new HistoryItem();
+        item.setTitle(info.getTitle());
+        item.setDescription(info.getDescription());
+        item.setOffset(offset);
+        if (info.getWebPageUrl() != null) {
+            item.setWebUrl(info.getWebPageUrl().toString());
+        }
+        if (info.getImageUrl() != null) {
+            item.setImgUrl(info.getImageUrl().toString());
+        }
+
+        getInstance(context).saveItem(item);
+    }
+
     public HistoryManager(Context context) {
         this.context = context;
         domainHistoryItemMap = new HashMap<>();
@@ -54,7 +74,7 @@ public class HistoryManager {
     }
 
     public List<String> getDomains() {
-        List<String> domains = new ArrayList<String>();
+        List<String> domains = new ArrayList<>();
         domains.addAll(domainHistoryItemMap.keySet());
 
         return domains;

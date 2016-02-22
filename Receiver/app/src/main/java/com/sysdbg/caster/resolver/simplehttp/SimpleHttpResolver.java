@@ -19,19 +19,19 @@ import java.net.URLConnection;
  * Created by crady on 1/24/2016.
  */
 abstract public class SimpleHttpResolver extends Resolver {
-    private static final String TAG = "Caster.AB";
+    private static final String TAG = SimpleHttpResolver.class.getSimpleName();
 
     public SimpleHttpResolver() {
 
     }
 
     @Override
-    protected MediaInfo doParse(String mUrl) {
-        URL url = null;
+    protected MediaInfo doParse(String mUrl) throws Throwable {
         HttpURLConnection httpConn = null;
         try {
-            url = new URL(generateRequestUrl(mUrl));
-            URLConnection conn = url.openConnection();
+            URL webPageUrl = new URL(mUrl);
+            URL requestUrl = generateRequestUrl(webPageUrl);
+            URLConnection conn = requestUrl.openConnection();
             if (!(conn instanceof HttpURLConnection)) {
                 Log.e(TAG, "url " + mUrl + " is not http");
                 return null;
@@ -57,12 +57,14 @@ abstract public class SimpleHttpResolver extends Resolver {
 
             // parse content
             String content = abos.toString();
-            final MediaInfo result = parseContent(content);
+            final MediaInfo result = parseContent(content, webPageUrl, requestUrl);
             if (result == null) {
                 return null;
             }
 
-            result.setWebPageUrl(mUrl);
+            if (result.getWebPageUrl() == null) {
+                result.setWebPageUrl(webPageUrl);
+            }
 
             return result;
         } catch (MalformedURLException e) {
@@ -78,7 +80,7 @@ abstract public class SimpleHttpResolver extends Resolver {
         return null;
     }
 
-    abstract protected String generateRequestUrl(String url);
+    abstract protected URL generateRequestUrl(URL webPageUrl) throws Throwable ;
     abstract protected void beforeSend(HttpURLConnection httpConn);
-    abstract protected MediaInfo parseContent(String content);
+    abstract protected MediaInfo parseContent(String content, URL webPageUrl, URL requestUrl) throws Throwable;
 }

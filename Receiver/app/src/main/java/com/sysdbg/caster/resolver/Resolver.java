@@ -25,7 +25,7 @@ abstract public class Resolver {
             resolver = new BilibiliResolver();
         }
         else if (url.contains("youku.com")) {
-            resolver = new FlvcdResolver();
+            resolver = new YoukuResolver();
         }
         else {
             resolver = new PlainUrlResolver();

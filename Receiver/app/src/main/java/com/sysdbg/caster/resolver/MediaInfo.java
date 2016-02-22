@@ -2,37 +2,43 @@ package com.sysdbg.caster.resolver;
 
 import android.util.Log;
 
+import com.sysdbg.caster.utils.StringUtils;
+
+import java.io.OutputStream;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+
+import io.vov.vitamio.provider.MediaStore;
 
 /**
  * Created by crady on 2/3/2016.
  */
 public class MediaInfo {
     private static final String TAG = "MediaInfo";
-    public static int MAX_VIDEO_RESOLUTION = 0x7fffffff;
+    public static final String MAX_VIDEO_RESOLUTION = TAG + "_MAX_VIDEO_RESOLUTION";
 
-    private List<List<MediaSection>> mediaSections;
-    private String webPageUrl;
-    private String imageUrl;
+    private List<String> definitions;   // from low to high
+    private Map<String, MediaData> definitionMediaDataMap;
+
+    private URL webPageUrl;
+    private URL imageUrl;
+
     private String title;
     private String description;
 
     public MediaInfo() {
-        mediaSections = new ArrayList<>();
-        webPageUrl = null;
-    }
-
-    @Override
-    public String toString() {
-        return "MediaInfo{" +
-                "mediaSections=" + mediaSections +
-                ", webPageUrl='" + webPageUrl + '\'' +
-                '}';
+        definitions = new ArrayList<>();
+        definitionMediaDataMap = new HashMap<>();
     }
 
     public String getTitle() {
@@ -51,183 +57,185 @@ public class MediaInfo {
         this.description = description;
     }
 
-    public void addMediaSection(List<MediaSection> sections) {
-        mediaSections.add(sections);
-    }
-
-    public String getWebPageUrl() {
+    public URL getWebPageUrl() {
         return webPageUrl;
     }
 
-    public void setWebPageUrl(String webPageUrl) {
+    public void setWebPageUrl(URL webPageUrl) {
         this.webPageUrl = webPageUrl;
     }
 
-    public int getMediaSectionCount() {
-        return mediaSections.size();
-    }
-
-    public int[] getResolutions(int sectionNumber) {
-        Set<Integer> resolutions = new HashSet<>();
-
-        for(MediaSection section : mediaSections.get(sectionNumber)) {
-            resolutions.add(section.getVideoResolution());
-        }
-
-        int[] array = new int[resolutions.size()];
-        int index = 0;
-        Iterator<Integer> it = resolutions.iterator();
-        while(it.hasNext()) {
-            Integer i = it.next();
-            array[index] = i;
-            index++;
-        }
-
-        Arrays.sort(array);
-
-        return array;
-    }
-
-    public MediaSection getMediaPart(int sectionNumber, int videoResolution) {
-        if (sectionNumber >= mediaSections.size()) {
-            Log.w(TAG, String.format("getMediaPart exceed limit, webUrl %s", webPageUrl));
-            return null;
-        }
-
-        MediaSection selectedSection = null;
-        for(MediaSection section : mediaSections.get(sectionNumber)) {
-            if (!section.isContainVideo() || !section.isContainAudio()) {
-                continue;
-            }
-
-            if (section.getVideoResolution() > videoResolution) {
-                continue;
-            }
-
-            if (selectedSection == null || section.getVideoResolution() > selectedSection.getVideoResolution()) {
-                selectedSection = section;
-            }
-        }
-
-        if (selectedSection == null) {
-            return null;
-        }
-
-        return selectedSection.clone();
-    }
-
-    public String getImageUrl() {
+    public URL getImageUrl() {
         return imageUrl;
     }
 
-    public void setImageUrl(String imageUrl) {
+    public void setImageUrl(URL imageUrl) {
         this.imageUrl = imageUrl;
     }
 
-    public static class MediaSection implements Cloneable {
-        private String mediaUrl;
+    public void addData(MediaData data) {
+        definitions.add(data.getDefinition());
+        definitionMediaDataMap.put(data.getDefinition(), data);
+    }
 
-        private boolean containVideo;
-        private int videoResolution; // such as 720 for 720p
-
-        private boolean containAudio;
-        private int audioBitRate;    // such 128 for 128 kbps
-
-        public MediaSection(String mediaUrl, boolean containVideo, int videoResolution, boolean containAudio, int audioBitRate) {
-            this.mediaUrl = mediaUrl;
-            this.containVideo = containVideo;
-            this.videoResolution = videoResolution;
-            this.containAudio = containAudio;
-            this.audioBitRate = audioBitRate;
+    public MediaData getData(String definition) {
+        if (definitions.size() == 0) {
+            return null;
         }
 
-        public MediaSection(String mediaUrl, boolean containVideo, boolean containAudio) {
-            this(mediaUrl, containVideo, 0, containAudio, 0);
+        if (MAX_VIDEO_RESOLUTION.equals(definition)) {
+            definition = definitions.get(definitions.size() - 1);
         }
 
-        public MediaSection(String mediaUrl) {
-            this(mediaUrl, true, true);
+        return definitionMediaDataMap.get(definition);
+    }
+
+    public List<String> getDefinitions() {
+        return new ArrayList<String>(definitions);
+    }
+
+    public static class MediaData {
+        private static final String TAG = MediaData.class.getSimpleName();
+
+        private List<URL> dataLocations;
+        private String definition;
+
+        private URL m3uLocation;    // optional
+
+        public MediaData() {
+            dataLocations = new ArrayList<>();
         }
 
-        @Override
-        public MediaSection clone() {
-            return new MediaSection(mediaUrl, containVideo, videoResolution, containAudio, audioBitRate);
+        public void addData(URL url) {
+            if (url == null) {
+                Log.e(TAG, "addData with null url");
+                return;
+            }
+
+            dataLocations.add(url);
         }
 
-        @Override
-        public String toString() {
-            return "MediaSection{" +
-                    "mediaUrl='" + mediaUrl + '\'' +
-                    ", containVideo=" + containVideo +
-                    ", videoResolution=" + videoResolution +
-                    ", containAudio=" + containAudio +
-                    ", audioBitRate=" + audioBitRate +
-                    '}';
+        public void clearData() {
+            dataLocations.clear();
         }
 
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (!(o instanceof MediaSection)) return false;
-
-            MediaSection that = (MediaSection) o;
-
-            if (containVideo != that.containVideo) return false;
-            if (videoResolution != that.videoResolution) return false;
-            if (containAudio != that.containAudio) return false;
-            if (audioBitRate != that.audioBitRate) return false;
-            return mediaUrl.equals(that.mediaUrl);
-
+        public List<URL> getDataLocations() {
+            return Collections.unmodifiableList(dataLocations);
         }
 
-        @Override
-        public int hashCode() {
-            int result = mediaUrl.hashCode();
-            result = 31 * result + (containVideo ? 1 : 0);
-            result = 31 * result + videoResolution;
-            result = 31 * result + (containAudio ? 1 : 0);
-            result = 31 * result + audioBitRate;
-            return result;
+        public URL getM3uLocation() {
+            return m3uLocation;
         }
 
-        public String getMediaUrl() {
-            return mediaUrl;
+        public void setM3uLocation(URL m3uLocation) {
+            this.m3uLocation = m3uLocation;
         }
 
-        public void setMediaUrl(String mediaUrl) {
-            this.mediaUrl = mediaUrl;
+        public String getDefinition() {
+            return definition;
         }
 
-        public boolean isContainVideo() {
-            return containVideo;
+        public void setDefinition(String definition) {
+            this.definition = definition;
         }
 
-        public void setContainVideo(boolean containVideo) {
-            this.containVideo = containVideo;
+        public void generateM3uWithLocations(OutputStream os) {
+            // TODO: Implement it!
+        }
+    }
+
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static class Builder {
+        private static final String TAG = Builder.class.getSimpleName();
+        private MediaInfo mediaInfo;
+
+        public Builder() {
+            mediaInfo = new MediaInfo();
         }
 
-        public int getVideoResolution() {
-            return videoResolution;
+        public Builder withWebPageUrl(URL url) {
+            mediaInfo.setWebPageUrl(url);
+            return this;
         }
 
-        public void setVideoResolution(int videoResolution) {
-            this.videoResolution = videoResolution;
+        public Builder withWebPageUrl(String url) throws MalformedURLException {
+            mediaInfo.setWebPageUrl(new URL(url));
+            return this;
         }
 
-        public boolean isContainAudio() {
-            return containAudio;
+        public Builder withImageUrl(URL url) {
+            mediaInfo.setImageUrl(url);
+            return this;
         }
 
-        public void setContainAudio(boolean containAudio) {
-            this.containAudio = containAudio;
+        public Builder withImageUrl(String url) throws MalformedURLException {
+            mediaInfo.setImageUrl(new URL(url));
+            return this;
         }
 
-        public int getAudioBitRate() {
-            return audioBitRate;
+        public Builder withTitle(String title) {
+            mediaInfo.setTitle(title);
+            return this;
         }
 
-        public void setAudioBitRate(int audioBitRate) {
-            this.audioBitRate = audioBitRate;
+        public Builder withDescription(String description) {
+            mediaInfo.setDescription(description);
+            return this;
+        }
+
+        public Builder withData(String definition, URL m3uLocation, URL... locations) {
+            if (locations == null || locations.length == 0) {
+                Log.e(TAG, "Add data with empty locations, skip");
+                return this;
+            }
+            if (StringUtils.isEmpty(definition)) {
+                Log.e(TAG, "Add data with empty definition, skip");
+                return this;
+            }
+
+            MediaData mediaData = new MediaData();
+            mediaData.setDefinition(definition);
+            mediaData.setM3uLocation(m3uLocation);
+
+            for(URL location : locations) {
+                mediaData.addData(location);
+            }
+
+            mediaInfo.addData(mediaData);
+            return this;
+        }
+
+        public Builder withData(String definition, String m3uLocation, String... locations) throws MalformedURLException {
+            if (locations == null || locations.length == 0) {
+                Log.e(TAG, "Add data with empty locations, skip");
+                return this;
+            }
+            if (StringUtils.isEmpty(definition)) {
+                Log.e(TAG, "Add data with empty definition, skip");
+                return this;
+            }
+
+            MediaData mediaData = new MediaData();
+            mediaData.setDefinition(definition);
+            if (!StringUtils.isEmpty(m3uLocation)) {
+                mediaData.setM3uLocation(new URL(m3uLocation));
+            }
+
+            for(String location : locations) {
+                mediaData.addData(new URL(location));
+            }
+
+            mediaInfo.addData(mediaData);
+            return this;
+        }
+
+        public MediaInfo build() {
+            MediaInfo returnValue = mediaInfo;
+            mediaInfo = new MediaInfo();
+            return returnValue;
         }
     }
 }

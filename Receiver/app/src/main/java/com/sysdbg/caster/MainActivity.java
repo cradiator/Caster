@@ -18,6 +18,8 @@ import com.sysdbg.caster.router.service.RouterService;
 import com.sysdbg.caster.utils.StringUtils;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 
 import io.vov.vitamio.Vitamio;
 
@@ -73,7 +75,7 @@ public class MainActivity extends Activity {
         }
 
         manager.executePendingTransactions();
-        play(url, 0, 0);
+        play(url, 0);
     }
 
     private void switchToFragment(Fragment fragment) {
@@ -87,55 +89,36 @@ public class MainActivity extends Activity {
     @Override
     protected void onStart() {
         super.onStart();
-        startServer();
         acquireWakeLock();
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-        stopServer();
         releaseWakeLock();
     }
 
     private CmdReceiver.Callback cmdReceiverCallback = new CmdReceiver.Callback() {
-
         @Override
         public void requestPlay(String url) {
-        play(url, 0,0 );
+            play(url, 0);
         }
     };
 
     private HistroyFragment.Callback historyFragmentCallback = new HistroyFragment.Callback() {
         @Override
         public void onPlay(HistoryItem item) {
-            play(item.getWebUrl(), item.getCurrentSection(), item.getCurrentOffset());
+            if (item.getWebUrl() != null) {
+                play(item.getWebUrl().toString(), item.getOffset());
+            }
         }
     };
 
-    private void play(String url, int sectionNumber, int offset) {
+    private void play(String url, long offset) {
         if (playerFragement != null) {
             switchToFragment(playerFragement);
-            playerFragement.play(url, sectionNumber, offset);
+            playerFragement.play(url, offset);
         }
-    }
-
-    private void startServer() {
-        /*
-        broadCastReceiver.start();
-        try {
-            cmdReceiver.start();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        */
-    }
-
-    private void stopServer() {
-        /*
-        broadCastReceiver.stop();
-        cmdReceiver.stop();
-        */
     }
 
     private void acquireWakeLock()

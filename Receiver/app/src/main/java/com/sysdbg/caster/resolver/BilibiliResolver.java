@@ -85,16 +85,15 @@ public class BilibiliResolver extends Resolver {
         return generateMediaInfo(mediaAddress, url, json.getString("pic"), title, description);
     }
 
-    private MediaInfo generateMediaInfo(String mediaAddress, String webPageUrl, String imageUrl, String title, String description) {
-        MediaInfo info = new MediaInfo();
-        List<MediaInfo.MediaSection> sections = new ArrayList<>();
-        MediaInfo.MediaSection section = new MediaInfo.MediaSection(mediaAddress, true, 720, true, 0);
-        sections.add(section);
-        info.addMediaSection(sections);
-        info.setWebPageUrl(webPageUrl);
-        info.setImageUrl(imageUrl);
-        info.setTitle(title);
-        info.setDescription(description);
+    private MediaInfo generateMediaInfo(String mediaAddress, String webPageUrl, String imageUrl, String title, String description) throws MalformedURLException {
+        MediaInfo info = MediaInfo.builder()
+                .withData("Max", null, mediaAddress)
+                .withWebPageUrl(webPageUrl)
+                .withImageUrl(imageUrl)
+                .withDescription(description)
+                .withTitle(title)
+                .build();
+
         return info;
     }
 

@@ -15,17 +15,13 @@ public class HistoryItem {
     private static final String TAG = HistoryItem.class.getSimpleName();
     private static final String WEB_URL = "WebUrl";
     private static final String IMG_URL = "ImgUrl";
-    private static final String TOTAL_SECTION = "TotalSection";
-    private static final String CURRENT_SECTION = "CurrentSection";
-    private static final String CURRENT_OFFSET = "CurrentOffset";
+    private static final String OFFSET = "Offset";
     private static final String TITLE = "Title";
     private static final String DESCRIPTION = "Description";
 
     private String webUrl;
     private String imgUrl;
-    private int totalSection;
-    private int currentSection;
-    private int currentOffset;
+    private long offset;
     private String title;
     private String description;
 
@@ -61,28 +57,12 @@ public class HistoryItem {
         this.imgUrl = imgUrl;
     }
 
-    public int getTotalSection() {
-        return totalSection;
+    public long getOffset() {
+        return offset;
     }
 
-    public void setTotalSection(int totalSection) {
-        this.totalSection = totalSection;
-    }
-
-    public int getCurrentSection() {
-        return currentSection;
-    }
-
-    public void setCurrentSection(int currentSectioin) {
-        this.currentSection = currentSectioin;
-    }
-
-    public int getCurrentOffset() {
-        return currentOffset;
-    }
-
-    public void setCurrentOffset(int currentOffset) {
-        this.currentOffset = currentOffset;
+    public void setOffset(long offset) {
+        this.offset = offset;
     }
 
     public JSONObject toJosn() {
@@ -107,9 +87,7 @@ public class HistoryItem {
                 json.put(DESCRIPTION, getDescription());
             }
 
-            json.put(TOTAL_SECTION, getTotalSection());
-            json.put(CURRENT_SECTION, getCurrentSection());
-            json.put(CURRENT_OFFSET, getCurrentOffset());
+            json.put(OFFSET, getOffset());
 
             result = json;
         }
@@ -126,18 +104,14 @@ public class HistoryItem {
             String imgUrl = json.optString(IMG_URL, null);
             String title = json.optString(TITLE, null);
             String description = json.optString(DESCRIPTION, null);
-            int totalSection = json.optInt(TOTAL_SECTION);
-            int currentSection = json.optInt(CURRENT_SECTION);
-            int currentOffset = json.optInt(CURRENT_OFFSET);
+            int offset = json.optInt(OFFSET, 0);
 
             HistoryItem item = new HistoryItem();
             item.setWebUrl(webUrl);
             item.setImgUrl(imgUrl);
             item.setTitle(title);
             item.setDescription(description);
-            item.setTotalSection(totalSection);
-            item.setCurrentSection(currentSection);
-            item.setCurrentOffset(currentOffset);
+            item.setOffset(offset);
 
             return item;
         }
