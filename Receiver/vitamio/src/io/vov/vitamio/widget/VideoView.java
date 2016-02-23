@@ -84,6 +84,9 @@ public class VideoView extends SurfaceView implements MediaController.MediaPlaye
     private static final int STATE_SUSPEND = 6;
     private static final int STATE_RESUME = 7;
     private static final int STATE_SUSPEND_UNSUPPORTED = 8;
+
+    private static final long STEP = 10 * 1000;
+
     OnVideoSizeChangedListener mSizeChangedListener = new OnVideoSizeChangedListener() {
         public void onVideoSizeChanged(MediaPlayer mp, int width, int height) {
             Log.d("onVideoSizeChanged: (%dx%d)", width, height);
@@ -589,7 +592,24 @@ public class VideoView extends SurfaceView implements MediaController.MediaPlaye
                     mMediaController.show();
                 }
                 return true;
-            } else {
+            } else if (keyCode == KeyEvent.KEYCODE_MEDIA_FAST_FORWARD) {
+                if (mMediaPlayer.isPlaying()) {
+                    mMediaPlayer.seekTo(getCurrentPosition() + STEP);
+                    mMediaController.show();
+                }
+            } else if (keyCode == KeyEvent.KEYCODE_MEDIA_REWIND) {
+                if (mMediaPlayer.isPlaying()) {
+                    long offset = mMediaPlayer.getCurrentPosition();
+                    if (offset < STEP) {
+                        offset = 0;
+                    }
+                    else {
+                        offset -= STEP;
+                    }
+                    mMediaPlayer.seekTo(offset);
+                    mMediaController.show();
+                }
+            }else {
                 toggleMediaControlsVisiblity();
             }
         }

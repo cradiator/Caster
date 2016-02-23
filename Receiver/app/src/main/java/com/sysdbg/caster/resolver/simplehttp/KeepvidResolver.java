@@ -94,8 +94,9 @@ public class KeepvidResolver extends SimpleHttpResolver {
     private MediaInfo findSuitableUrl(JSONObject json) throws MalformedURLException {
         Iterator<String> it = json.keys();
 
-        String quality = null, url = null;
+        String selectedQuality = null, selectedUrl = null;
         while(it.hasNext()) {
+            String quality = null, url = null;
             String key = it.next();
 
             try {
@@ -114,21 +115,27 @@ public class KeepvidResolver extends SimpleHttpResolver {
                 if (quality == null || quality.contains("Only") || quality.contains("only")) {
                     continue;
                 }
+
+                if (selectedQuality == null || compareQuality(quality, selectedQuality) > 0) {
+                    selectedQuality = quality;
+                    selectedUrl = url;
+                }
+
             } catch (JSONException e) {
             }
         }
 
-        if (StringUtils.isEmpty(quality)) {
-            quality = "Unknown";
+        if (StringUtils.isEmpty(selectedQuality)) {
+            selectedQuality = "Unknown";
         }
 
-        if (StringUtils.isEmpty(url)) {
+        if (StringUtils.isEmpty(selectedUrl)) {
             Log.e(TAG, "Can find suitable url");
             return null;
         }
 
         return MediaInfo.builder()
-                .withData(quality, null, url)
+                .withData(selectedQuality, null, selectedUrl)
                 .build();
     }
 

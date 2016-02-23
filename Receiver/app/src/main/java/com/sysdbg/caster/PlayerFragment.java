@@ -11,6 +11,7 @@ import android.widget.TextView;
 
 import com.sysdbg.caster.history.HistoryItem;
 import com.sysdbg.caster.history.HistoryManager;
+import com.sysdbg.caster.player.PlayerController;
 import com.sysdbg.caster.player.PlayerView;
 import com.sysdbg.caster.resolver.MediaInfo;
 import com.sysdbg.caster.resolver.Resolver;
@@ -29,7 +30,7 @@ public class PlayerFragment extends Fragment {
     private Handler handler;
     private PlayerView playerView;
     private TextView playerInformationTextView;
-    private MediaController playerController;
+    private PlayerController playerController;
     private MediaInfo mediaInfo;
     private String definition;
 
@@ -99,7 +100,7 @@ public class PlayerFragment extends Fragment {
         mediaInfo = null;
     }
 
-    public String getDefinition() {
+    public String getCurrentDefinition() {
         return definition;
     }
 
@@ -129,8 +130,8 @@ public class PlayerFragment extends Fragment {
         playerView = (PlayerView)view.findViewById(R.id.playerView);
         playerInformationTextView = (TextView)view.findViewById(R.id.playerInformationTextView);
 
-        playerController = new MediaController(getActivity());
-        // playerController.setCallback(playerContrallerCallback);
+        playerController = new PlayerController(getActivity());
+        playerController.setCallback(playerContrallerCallback);
         playerView.setMediaController(playerController);
         playerView.setOnPreparedListener(onMediaPlayerPrepared);
         playerView.setOnCompletionListener(onMediaPlayerComplete);
@@ -202,52 +203,38 @@ public class PlayerFragment extends Fragment {
         @Override
         public void onCompletion(MediaPlayer mp) {
             addText("Play Completion");
+            playerView.stopPlayback();
+            playerView.seekTo(0);
             HistoryManager.saveMediaInfo(getActivity().getApplication(), mediaInfo, 0);
         }
     };
-/*
+
     private PlayerController.Callback playerContrallerCallback = new PlayerController.Callback() {
         @Override
-        public int getSectionCount() {
-            return PlayerFragment.this.getSectionCount();
+        public String[] getDefinitions() {
+            if (mediaInfo == null) {
+                return new String[0];
+            }
+
+            String[] definitions = new String[mediaInfo.getDefinitions().size()];
+            mediaInfo.getDefinitions().toArray(definitions);
+
+            return definitions;
         }
 
         @Override
-        public int getCurrentSection() {
-            return PlayerFragment.this.getCurrentSection();
+        public String getCurrentDefinition() {
+            return PlayerFragment.this.getCurrentDefinition();
         }
 
         @Override
-        public int[] getResolutions() {
-            return PlayerFragment.this.getResolutions(
-                    PlayerFragment.this.getCurrentSection()
-            );
-        }
-
-        @Override
-        public int getCurrentResolution() {
-            return PlayerFragment.this.getCurrentResolution();
-        }
-
-        @Override
-        public void requestChangeSection(int sectionNumber) {
+        public void reqeustChangeDefinition(String definition) {
             PlayerFragment.this.play(
-                    PlayerFragment.this.getUrl(),
-                    sectionNumber,
-                    0
-            );
-        }
-
-        @Override
-        public void reqeustChangeResolution(int resolution) {
-            PlayerFragment.this.play(
-                    PlayerFragment.this.getUrl(),
-                    PlayerFragment.this.getCurrentSection(),
-                    PlayerFragment.this.getCurrentSectionOffset(),
-                    resolution);
+                    PlayerFragment.this.getUrl().toString(),
+                    PlayerFragment.this.getPosition(),
+                    definition);
         }
     };
-    */
 }
 
 

@@ -24,7 +24,6 @@ import io.vov.vitamio.widget.VideoView;
 public class PlayerView extends VideoView {
     private static final String TAG = PlayerView.class.getSimpleName();
     private static final String M3U_CACHE_DIR = "M3U-Cache";
-
     private boolean firstPlay = true;
 
     public PlayerView(Context context) {

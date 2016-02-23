@@ -41,6 +41,7 @@ import android.widget.TextView;
 
 import java.lang.reflect.Method;
 
+import io.vov.vitamio.R;
 import io.vov.vitamio.utils.Log;
 import io.vov.vitamio.utils.StringUtils;
 
@@ -194,6 +195,7 @@ public class MediaController extends FrameLayout {
   private void initFloatingWindow() {
     mWindow = new PopupWindow(mContext);
     mWindow.setFocusable(false);
+    mWindow.setTouchable(true);
     mWindow.setBackgroundDrawable(null);
     mWindow.setOutsideTouchable(true);
     mAnimStyle = android.R.style.Animation;
@@ -237,7 +239,10 @@ public class MediaController extends FrameLayout {
    * @return The controller view.
    */
   protected View makeControllerView() {
-    return ((LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE)).inflate(getResources().getIdentifier("mediacontroller", "layout", mContext.getPackageName()), this);
+    // return ((LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE)).inflate(getResources().getIdentifier("mediacontroller", "layout", mContext.getPackageName()), this);
+    LayoutInflater inflate = (LayoutInflater) getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+    View view = inflate.inflate(R.layout.mediacontroller, null);
+    return view;
   }
 
   private void initControllerView(View v) {
