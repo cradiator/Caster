@@ -58,6 +58,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import android.widget.MediaController;
+
 /**
  * Displays a video file. The VideoView class can load images from various
  * sources (such as resources or content providers), takes care of computing its
@@ -509,7 +511,6 @@ public class VideoView extends SurfaceView implements MediaController.MediaPlaye
             if (mUri != null) {
                 List<String> paths = mUri.getPathSegments();
                 String name = paths == null || paths.isEmpty() ? "null" : paths.get(paths.size() - 1);
-                mMediaController.setFileName(name);
             }
         }
     }
@@ -659,21 +660,28 @@ public class VideoView extends SurfaceView implements MediaController.MediaPlaye
         }
     }
 
-    public long getDuration() {
+    @Override
+    public int getDuration() {
         if (isInPlaybackState()) {
             if (mDuration > 0)
-                return mDuration;
+                return (int)mDuration;
             mDuration = mMediaPlayer.getDuration();
-            return mDuration;
+            return (int)mDuration;
         }
         mDuration = -1;
-        return mDuration;
+        return (int)mDuration;
     }
 
-    public long getCurrentPosition() {
+    @Override
+    public int getCurrentPosition() {
         if (isInPlaybackState())
-            return mMediaPlayer.getCurrentPosition();
+            return (int)mMediaPlayer.getCurrentPosition();
         return 0;
+    }
+
+    @Override
+    public void seekTo(int pos) {
+        seekTo((long)pos);
     }
 
     public void seekTo(long msec) {
@@ -692,6 +700,26 @@ public class VideoView extends SurfaceView implements MediaController.MediaPlaye
     public int getBufferPercentage() {
         if (mMediaPlayer != null)
             return mCurrentBufferPercentage;
+        return 0;
+    }
+
+    @Override
+    public boolean canPause() {
+        return true;
+    }
+
+    @Override
+    public boolean canSeekBackward() {
+        return true;
+    }
+
+    @Override
+    public boolean canSeekForward() {
+        return true;
+    }
+
+    @Override
+    public int getAudioSessionId() {
         return 0;
     }
 

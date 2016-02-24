@@ -15,7 +15,7 @@ import com.sysdbg.caster.R;
 import java.util.HashMap;
 import java.util.Map;
 
-import io.vov.vitamio.widget.MediaController;
+import android.widget.MediaController;
 
 /**
  * Created by crady on 2/8/2016.
@@ -56,12 +56,18 @@ public class PlayerController extends MediaController {
     }
 
     @Override
-    protected View makeControllerView() {
-        View v = super.makeControllerView();
-        makeRootLayout();
-        controllerLayout.addView(v, FRAME_LAYOUT_MATCH_PARENT);
+    public void setAnchorView(View view) {
+        // make system generated view and remove it from root
+        super.setAnchorView(view);
 
-        return rootLayout;
+        View controllerRoot = getChildAt(0);
+        removeView(controllerRoot);
+
+        // generate new root
+        makeRootLayout();
+        controllerLayout.addView(controllerRoot, FRAME_LAYOUT_MATCH_PARENT);
+
+        addView(rootLayout, FRAME_LAYOUT_MATCH_PARENT);
     }
 
     private View makeRootLayout() {
@@ -115,6 +121,11 @@ public class PlayerController extends MediaController {
 
     @Override
     public void show(int milliseconds) {
+        if (definitionButtonMap == null) {
+            super.show(milliseconds);
+            return;
+        }
+
         for(Map.Entry<String, Button> entry : definitionButtonMap.entrySet()) {
             Button button = entry.getValue();
             if (button != null) {
