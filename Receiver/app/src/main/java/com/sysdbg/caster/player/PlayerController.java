@@ -2,6 +2,7 @@ package com.sysdbg.caster.player;
 
 import android.content.Context;
 import android.util.AttributeSet;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,11 +22,14 @@ import android.widget.MediaController;
  * Created by crady on 2/8/2016.
  */
 public class PlayerController extends MediaController {
+    private static final int STEP = 10 * 1000;
+
     private FrameLayout dialogLayout;
     private FrameLayout controllerLayout;
     private RelativeLayout rootLayout;
     private Callback callback;
     private Map<String, Button> definitionButtonMap;
+    private MediaPlayerControl mediaPlayerControl;
 
     private static FrameLayout.LayoutParams FRAME_LAYOUT_MATCH_PARENT = new FrameLayout.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT,
@@ -142,6 +146,50 @@ public class PlayerController extends MediaController {
         }
 
         super.show(milliseconds);
+    }
+
+    @Override
+    public boolean dispatchKeyEvent(KeyEvent event) {
+        if (mediaPlayerControl == null) {
+            return super.dispatchKeyEvent(event);
+        }
+
+        int keyCode = event.getKeyCode();
+        boolean firstPress = (event.getRepeatCount() == 0);
+
+        int step = STEP;
+        if (firstPress) {
+            step *= 3;
+        }
+        if  (keyCode == KeyEvent.KEYCODE_MEDIA_FAST_FORWARD) {
+            if (mediaPlayerControl.isPlaying()) {
+                mediaPlayerControl.seekTo(mediaPlayerControl.getCurrentPosition() + step);
+                show();
+                return true;
+            }
+        }
+        else if (keyCode == KeyEvent.KEYCODE_MEDIA_REWIND) {
+            if (mediaPlayerControl.isPlaying()) {
+                int offset = mediaPlayerControl.getCurrentPosition();
+                if (offset < step) {
+                    offset = 0;
+                }
+                else {
+                    offset -= step;
+                }
+                mediaPlayerControl.seekTo(offset);
+                show();
+                return true;
+            }
+        }
+
+        return super.dispatchKeyEvent(event);
+    }
+
+    @Override
+    public void setMediaPlayer(MediaPlayerControl player) {
+        mediaPlayerControl = player;
+        super.setMediaPlayer(player);
     }
 
     private class DefinitionButtonClickListener implements OnClickListener {
