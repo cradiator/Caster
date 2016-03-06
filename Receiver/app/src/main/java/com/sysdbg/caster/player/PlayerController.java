@@ -157,13 +157,20 @@ public class PlayerController extends MediaController {
         int keyCode = event.getKeyCode();
         boolean firstPress = (event.getRepeatCount() == 0);
 
+        PlayerView playerView = (PlayerView)mediaPlayerControl;
+
         int step = STEP;
         if (firstPress) {
             step *= 3;
         }
         if  (keyCode == KeyEvent.KEYCODE_MEDIA_FAST_FORWARD) {
             if (mediaPlayerControl.isPlaying()) {
-                mediaPlayerControl.seekTo(mediaPlayerControl.getCurrentPosition() + step);
+                if (event.getAction() == KeyEvent.ACTION_UP) {
+                    playerView.takeEffectPendingPosition();
+                }
+                else if (event.getAction() == KeyEvent.ACTION_DOWN || event.getAction() == KeyEvent.ACTION_MULTIPLE){
+                    playerView.setPendingPostion(playerView.getCurrentPosition() + step);
+                }
                 show();
                 return true;
             }
@@ -177,7 +184,14 @@ public class PlayerController extends MediaController {
                 else {
                     offset -= step;
                 }
-                mediaPlayerControl.seekTo(offset);
+
+                if (event.getAction() == KeyEvent.ACTION_UP) {
+                    playerView.takeEffectPendingPosition();
+                }
+                else if (event.getAction() == KeyEvent.ACTION_DOWN || event.getAction() == KeyEvent.ACTION_MULTIPLE){
+                    playerView.setPendingPostion(offset);
+                }
+
                 show();
                 return true;
             }

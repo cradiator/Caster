@@ -24,7 +24,10 @@ import io.vov.vitamio.widget.VideoView;
 public class PlayerView extends VideoView {
     private static final String TAG = PlayerView.class.getSimpleName();
     private static final String M3U_CACHE_DIR = "M3U-Cache";
+    private static final int NO_PENDING_POSITION = -1;
+
     private boolean firstPlay = true;
+    private int pendingPosition = -1;
 
     public PlayerView(Context context) {
         super(context);
@@ -82,6 +85,32 @@ public class PlayerView extends VideoView {
             seekTo(offset);
         }
         start();
+    }
+
+    @Override
+    public int getCurrentPosition() {
+        if (pendingPosition != NO_PENDING_POSITION) {
+            return pendingPosition;
+        }
+
+        return super.getCurrentPosition();
+    }
+
+    public int getPendingPosition() {
+        return pendingPosition;
+    }
+
+    public void setPendingPostion(int pendingPosition) {
+        this.pendingPosition = pendingPosition;
+    }
+
+    public void takeEffectPendingPosition() {
+        if (pendingPosition == NO_PENDING_POSITION) {
+            return;
+        }
+
+        seekTo(pendingPosition);
+        pendingPosition = NO_PENDING_POSITION;
     }
 
     private String generateLocalM4u(MediaInfo.MediaData mediaData, String prefix) {
