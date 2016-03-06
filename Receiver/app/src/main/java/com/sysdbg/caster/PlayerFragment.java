@@ -9,7 +9,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import com.sysdbg.caster.history.HistoryItem;
 import com.sysdbg.caster.history.HistoryManager;
 import com.sysdbg.caster.player.PlayerController;
 import com.sysdbg.caster.player.PlayerView;
@@ -22,7 +21,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.vov.vitamio.MediaPlayer;
-import io.vov.vitamio.widget.MediaController;
 
 public class PlayerFragment extends Fragment {
     private static final String TAG = PlayerFragment.class.getSimpleName();
