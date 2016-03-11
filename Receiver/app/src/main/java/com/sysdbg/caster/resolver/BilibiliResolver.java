@@ -3,6 +3,7 @@ package com.sysdbg.caster.resolver;
 import android.util.Log;
 
 import com.sysdbg.caster.utils.MD5;
+import com.sysdbg.caster.utils.StringUtils;
 
 import org.json.JSONObject;
 
@@ -31,8 +32,8 @@ import java.util.regex.Pattern;
 public class BilibiliResolver extends Resolver {
     private static final String TAG = BilibiliResolver.class.getSimpleName();
     private static final String USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/45.0.2454.99 Safari/537.36";
-    private static final String APPKEY = "85eb6835b0a1034e";
-    private static final String APPSEC = "2ad42749773c441109bdc0191257a664";
+    private static final String APPKEY = "8e9fc618fbd41e28";
+    private static final String APPSEC = "";
 
     private static final String API_BASE = "http://api.bilibili.com/view?";
     private static final String INTERFACE_BASE = "http://interface.bilibili.com/playurl?";
@@ -129,9 +130,11 @@ public class BilibiliResolver extends Resolver {
             sb.append(params.get(key));
         }
 
-        String sign = MD5.md5(sb.toString() + APPSEC);
-        sb.append("&sign=");
-        sb.append(sign);
+        if (!StringUtils.isEmpty(APPSEC)) {
+            String sign = MD5.md5(sb.toString() + APPSEC);
+            sb.append("&sign=");
+            sb.append(sign);
+        }
 
         return sb.toString();
     }
